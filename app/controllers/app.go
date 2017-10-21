@@ -9,7 +9,7 @@ type App struct {
 }
 
 func (c App) Index() revel.Result {
-	greeting := "Aloha World"
+	greeting := "RESTFul with Golang"
 	return c.Render(greeting)
 }
 
