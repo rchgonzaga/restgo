@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	// Don't know why yet
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/revel/revel"
 )

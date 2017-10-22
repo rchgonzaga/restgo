@@ -8,15 +8,36 @@ import (
 	"github.com/revel/revel"
 )
 
+//
 var (
 	Dbm *gorp.DbMap
 )
 
+// GorpController will be extended for others
 type GorpController struct {
 	*revel.Controller
 	Txn *gorp.Transaction
 }
 
+// InitDb is the function called in the start of the application
+var InitDb = func() {
+	connectionString := getConnectionString()
+	if db, err := sql.Open("mysql", connectionString); err != nil {
+		revel.ERROR.Fatal(err)
+	} else {
+		Dbm = &gorp.DbMap{
+			Db:      db,
+			Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
+	}
+	// Defines the table for use by GORP
+	// This is a function we will create soon.
+	defineBidItemTable(Dbm)
+	if err := Dbm.CreateTablesIfNotExists(); err != nil {
+		revel.ERROR.Fatal(err)
+	}
+}
+
+// Begin is a method that starts a transaction
 func (c *GorpController) Begin() revel.Result {
 	txn, err := Dbm.Begin()
 	if err != nil {
@@ -26,6 +47,7 @@ func (c *GorpController) Begin() revel.Result {
 	return nil
 }
 
+// Commit Method that commits something
 func (c *GorpController) Commit() revel.Result {
 	if c.Txn == nil {
 		return nil
@@ -37,6 +59,7 @@ func (c *GorpController) Commit() revel.Result {
 	return nil
 }
 
+// Rollback method that returns a transaction
 func (c *GorpController) Rollback() revel.Result {
 	if c.Txn == nil {
 		return nil
@@ -53,21 +76,4 @@ func defineBidItemTable(dbm *gorp.DbMap) {
 	t := dbm.AddTable(models.BidItem{}).SetKeys(true, "id")
 	// e.g. VARCHAR(25)
 	t.ColMap("name").SetMaxSize(25)
-}
-
-var InitDb func() = func() {
-	connectionString := getConnectionString()
-	if db, err := sql.Open("mysql", connectionString); err != nil {
-		revel.ERROR.Fatal(err)
-	} else {
-		Dbm = &gorp.DbMap{
-			Db:      db,
-			Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
-	}
-	// Defines the table for use by GORP
-	// This is a function we will create soon.
-	defineBidItemTable(Dbm)
-	if err := Dbm.CreateTablesIfNotExists(); err != nil {
-		revel.ERROR.Fatal(err)
-	}
 }
